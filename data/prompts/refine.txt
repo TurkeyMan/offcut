@@ -1,0 +1,8 @@
+# Refine, template route: a follow-up to an AI result, stateless. The result
+# is attached again with the original picture, and what earlier rounds asked
+# for is summarised. Try again resends the version's own prompt.
+# Placeholders: {done} {issues}
+Edit the first image, the flat front design of a layered paper shadowbox seen straight on. Keep its layers, composition and colours, and change only what is asked below.
+The second image is the original picture: a subject reference only, not a style to copy.
+Already done in earlier rounds, keep it: {done}
+Also fix what Offcut found: {issues}

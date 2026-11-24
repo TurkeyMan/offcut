@@ -7,6 +7,7 @@
 #include <sstream>
 #include <stdexcept>
 #include "transform.h"
+#include "versions.h"
 
 namespace offcut
 {
@@ -30,7 +31,12 @@ std::filesystem::path fresh(const std::filesystem::path& parent, const char* pre
 {
     for (int i = 1; i < 100000; ++i)
     {
-        auto p = parent / (std::string(prefix) + "-" + std::to_string(i));
+        std::ostringstream name;
+        name << prefix << '-';
+        if (std::string_view(prefix) == "offcut-ai-request")
+            name << std::setw(2) << std::setfill('0');
+        name << i;
+        auto p = parent / name.str();
         if (std::filesystem::create_directory(p))
             return p;
     }
@@ -128,7 +134,7 @@ std::string svg(const cut_layer& c, const transform_options& o)
         << "<path fill=\"black\" fill-rule=\"evenodd\" d=\"" << path.str() << "\"/>\n</svg>\n";
     return out.str();
 }
-void write_png(const raster& r, const std::filesystem::path& path)
+std::vector<uint8_t> encode_png(const raster& r)
 {
     if (!r.valid())
         throw std::runtime_error("Invalid PNG image.");
@@ -166,6 +172,11 @@ void write_png(const raster& r, const std::filesystem::path& path)
     chunk(png, "IHDR", ihdr);
     chunk(png, "IDAT", z);
     chunk(png, "IEND", {});
+    return png;
+}
+void write_png(const raster& r, const std::filesystem::path& path)
+{
+    const auto png = encode_png(r);
     std::ofstream out(path, std::ios::binary);
     out.write(reinterpret_cast<const char*>(png.data()), std::streamsize(png.size()));
     out.close();
@@ -179,6 +190,7 @@ std::filesystem::path export_layers(const project& p, const std::filesystem::pat
     if (p.stale)
         throw std::runtime_error("The design has changed. Generate or import layers again before exporting.");
     const auto folder = fresh(parent, "offcut-layers");
+    const auto frame = borders(p.options);
     for (size_t i = 0; i < p.cuts.size(); ++i)
     {
         write_text(folder / (numbered(i) + ".svg"), svg(p.cuts[i], p.options));
@@ -189,29 +201,64 @@ std::filesystem::path export_layers(const project& p, const std::filesystem::pat
         write_png(mask, folder / (numbered(i) + ".png"));
     }
     write_png(render_cuts(p.cuts), folder / "preview.png");
-    write_text(folder / "ASSEMBLY.txt",
-               "Offcut — experimental cut layers\n01.svg is the front; assemble in ascending order towards the back.\nBlack is retained cardstock. "
-               "White/transparent areas are removed.\nAll SVG files share the same physical dimensions, including their border.\nPNG files are reference "
-               "masks, not cutting files.\nLayer numbers are filenames only. Choose your own cardstock colours.\nInspect every layer in Design Space and make "
-               "a small test cut before committing materials.\nThe preview is flat artwork, not a simulation of transmitted light or material strength.\n");
+    std::ostringstream dimensions_text;
+    dimensions_text << "Outer size: " << p.options.width_mm << " x " << p.options.height_mm << " mm.\n"
+                    << "Frame (mm): top " << frame.top << ", bottom " << frame.bottom << ", left " << frame.left << ", right " << frame.right << ".\n"
+                    << "Spacer thickness / layer gap: " << p.options.layer_gap_mm
+                    << " mm. Hidden overlap allows a 45-degree viewing angle, with extra hidden support where needed.\n";
+    write_text(
+        folder / "ASSEMBLY.txt",
+        dimensions_text.str() +
+            "Offcut — experimental cut layers\n01.svg is the front; assemble in ascending order towards the back.\nBlack is retained cardstock. "
+            "White/transparent areas are removed.\nAll SVG files share the same physical dimensions, including their border.\nPNG files are reference "
+            "masks, not cutting files.\nLayer numbers are filenames only. Choose your own cardstock colours.\nInspect every layer in Design Space and make "
+            "a small test cut before committing materials.\nThe preview is flat artwork, not a simulation of transmitted light or material strength.\n");
     return folder;
 }
 std::filesystem::path export_ai_request(const project& p, const std::filesystem::path& parent)
 {
-    if (p.sources.empty())
+    if (p.layers.empty())
         throw std::runtime_error("Add a source image first.");
     validate(p.options);
     const auto folder = fresh(parent, "offcut-ai-request");
     write_text(folder / "PROMPT.txt", ai_prompt(p));
-    write_png(flatten(p.sources, p.options), folder / "composition.png");
-    for (size_t i = 0; i < p.sources.size(); ++i)
-        if (p.sources[i].visible)
-            write_png(p.sources[i].image, folder / ("reference-" + numbered(i) + ".png"));
+    write_png(flatten(p.layers, p.options), folder / "composition.png");
+    for (size_t i = 0; i < p.layers.size(); ++i)
+        if (p.layers[i].visible)
+            write_png(cropped(current_pixels(p.layers[i]), effective_transform(p.layers[i], p.options).crop), folder / ("reference-" + numbered(i) + ".png"));
+    write_text(
+        folder / "README.txt",
+        "Attach composition.png and the relevant reference images in your chosen AI app, then paste PROMPT.txt.\nRequest ONE flat-colour illustration with "
+        "exactly the requested number of opaque tones, darkest at the border.\n"
+        "Features sharing a tone share a sheet of card. Arrange them to touch each other or the border through the same or darker tones: a bird on a branch, "
+        "lettering on the ground, a cloud meeting the top edge.\n"
+        "Ask the model to move, resize, overlap or add connecting elements instead of leaving anything floating. Prefer contact areas at least Min. width "
+        "wide, not point contacts or thin fake bridges.\n"
+        "Return to Offcut and choose AI handoff > Import flat illustration… . Offcut separates and cleans the tones, cover-crops if necessary, then builds "
+        "aligned sheets locally.\n"
+        "The layer gap controls hidden overlap beneath front sheets. Floating-piece removal and crop amounts are reported after import; inspect the result "
+        "before exporting SVGs.\n"
+        "Import layer images… remains available for separate, already aligned black-on-white masks, numbered front to back.\n"
+        "Manual export does not upload anything or require an account connection. Generate with AI sends these images only after the explicit Send review; "
+        "its response.png is imported automatically, with model/endpoint/time/usage in response.json and no API key in this folder.\n");
+    return folder;
+}
+std::filesystem::path write_ai_request(const std::filesystem::path& parent, const std::string& prompt,
+                                       const std::vector<std::pair<std::string, std::vector<uint8_t>>>& files)
+{
+    const auto folder = fresh(parent, "offcut-ai-request");
+    write_text(folder / "PROMPT.txt", prompt);
+    for (const auto& [name, bytes] : files)
+    {
+        std::ofstream out(folder / from_utf8(name), std::ios::binary);
+        out.write(reinterpret_cast<const char*>(bytes.data()), std::streamsize(bytes.size()));
+        out.close();
+        if (!out)
+            throw std::runtime_error("Could not write " + name);
+    }
     write_text(folder / "README.txt",
-               "Attach composition.png and the relevant reference images in your chosen AI app, then paste PROMPT.txt.\nRequest separate, aligned, "
-               "black-on-white layer images.\nReturn to Offcut and choose Import layer images; select them in front-to-back filename order.\nOffcut thresholds "
-               "the masks, adds the frame and optional bridges, then traces their contours for SVG export.\nNo images are uploaded by Offcut and no account "
-               "connection is required for this manual workflow.\n");
+               "What Offcut sent to the AI provider: PROMPT.txt and the images beside it, exactly as uploaded. The reply is response.png, .jpg or "
+               ".webp, with the model, time and usage in response.json. No API key is stored here.\n");
     return folder;
 }
 }  // namespace offcut

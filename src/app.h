@@ -27,7 +27,11 @@ public:
     rap::window* detach(editor_window&, const std::string&);
     bool receive(editor_window&, const rap::document_tabs::transfer&);
     void changed();
-    void task(std::shared_ptr<project>, std::string activity, std::function<void(project&)>);
+    // Runs `work` on a copy of the project and publishes it on the UI thread.
+    // The result is an undo step named `undo_label` (by default the activity);
+    // a result without a history (an opened project) starts a new one.
+    void task(std::shared_ptr<project>, std::string activity, std::function<void(project&)>, std::function<void(bool)> finished = {},
+              std::string undo_label = {});
     std::string next_id();
 
 private:

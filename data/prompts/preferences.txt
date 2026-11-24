@@ -1,0 +1,5 @@
+# Introduces the user's own words (AI style, Notes for AI, Your instructions)
+# after the scene directions. Left out when the user wrote nothing. With a
+# director, the user's words go to it instead and it folds them into the
+# scene directions.
+The user's wishes for this picture follow. Follow them, within the rules after them.

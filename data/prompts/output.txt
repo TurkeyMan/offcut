@@ -1,0 +1,6 @@
+# The three-line output spec that closes every image prompt (the brief in
+# short: image models follow concrete directions, not rules).
+# Placeholders: {size} {sheets} {palette} {min_width_px} {borders_px?}
+Output: the whole frame, {size}, with a solid border in the front colour all round{borders_px?}.
+Flat coloured regions only, in exactly these {sheets} colours, one per layer as listed: {palette}. No other colours; no outlines or contour lines, texture or text; nothing thinner than {min_width_px} pixels.
+Nothing floating: every shape touches the border or a shape of the same colour.

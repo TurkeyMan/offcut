@@ -1,0 +1,20 @@
+# The review bar's chips (docs/ux-design.md section 8), one per line:
+#   id | menu | label | the follow-up sent to the model
+# Versions record the ids, so keep an id when you reword its line. A label
+# ending in … asks the user for a word, which fills {element}. {min_width},
+# {min_width_px} and {sheets} are filled from the project. With a director
+# (phase 2) chips go to it as critique; without one, these lines are sent.
+support.added-on | Support | Looks added on | The supports look added on. Hold things up with the scene instead: let subjects meet the border or the ground, overlap same-colour shapes, or add scenery that suits the picture.
+support.recompose | Support | Recompose instead | Recompose the picture so subjects are held by the border, the ground or each other, instead of adding supports.
+support.thin-contacts | Support | Contacts too thin | Some joins between shapes are too thin: make every contact at least {min_width_px} pixels wide.
+support.floating | Support | Pieces still float | Pieces still float: join every shape to the border or to same-colour shapes, or leave it out.
+support.use | Support | Use… | Use {element} to hold up the parts that float, drawn as part of the scene.
+likeness.unlike | Likeness | Not like the subject | The subject no longer looks like the original picture: follow the attached original more closely in silhouette, proportions and defining features.
+likeness.lost-feature | Likeness | Lost a feature… | Put back the subject's {element}, as in the original picture.
+likeness.pose | Likeness | Changed the pose | Keep the subject's pose from the original picture.
+detail.too-detailed | Detail | Too detailed | Too much detail to cut from card: merge small shapes into fewer, larger ones.
+detail.too-simple | Detail | Too simple | Too simple: add a little more of the subject's defining detail, still in large flat shapes.
+detail.thin-lines | Detail | Lines too thin | Lines and details are too thin to cut: remove all outlines, and make every remaining detail at least {min_width_px} pixels wide.
+colours.count | Colours | Wrong number | Use exactly {sheets} flat colours, no more and no fewer.
+colours.depth | Colours | Wrong depth order | The depth order is wrong: the darkest colour belongs at the front and on the border, lighter colours further back.
+colours.noise | Colours | Gradients or noise | Remove gradients, shading, texture and noise: make every shape one flat, opaque colour.

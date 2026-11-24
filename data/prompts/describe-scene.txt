@@ -1,0 +1,7 @@
+# Describe a scene: a project from words alone (docs/ux-design.md section 10).
+# Not wired up yet; written so the flow can use it.
+# Placeholders: {description} {references}
+Task: create a shadowbox illustration from a description.
+The scene: {description}
+Compose it for this frame from the start, so that every part is held by the scene itself.
+{references}

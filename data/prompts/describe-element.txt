@@ -1,0 +1,8 @@
+# Describe an element: one new item against the current scene (section 10).
+# Not wired up yet; written so the flow can use it.
+# Placeholders: {description} {area} {background}
+Task: add one new element to the attached scene.
+The first image is the current scene at frame size. Draw only the new element, in the scene's style, colours and tones, sized and placed to fit: {description}
+Place it in the marked area: {area}
+Make it touch the scene where that makes sense: perched, resting or overlapping.
+Leave everything else empty: {background}.

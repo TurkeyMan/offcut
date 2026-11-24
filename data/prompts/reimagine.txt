@@ -1,0 +1,11 @@
+# Reimagine as shadowbox, template route (no director): concrete depth
+# directions for the first drawing. Sent first; the user's words and the
+# three-line output spec (output.txt) follow. {planes} is a default list of
+# depth planes for the sheet count, near to far; a director's plan replaces
+# it. Placeholders: {sheets} {planes} {placement?} {references}
+Draw the flat front design of a layered paper shadowbox, seen straight on: {sheets} flat paper layers, each depth one flat colour, nearer layers overlapping further ones.
+The first image is a subject reference only: keep the subject's likeness, pose, size and place in the picture{placement?}, but do not copy its line work, outlines, shading, gradients or style.
+Layers, near to far:
+{planes}
+Build the subject from a few large, simple shapes.
+{references}

@@ -1,0 +1,66 @@
+# The director's critique request (docs/ux-design.md section 8, "The loop"
+# step 6, and "Verdict"). Sent to the reasoning model after Offcut has
+# snapped, built and measured a drawing; it returns only the verdict JSON.
+# Offcut decides pass or fail from its own measurements; the critic explains,
+# judges what measurements can't (depth, likeness, look) and proposes the
+# cheapest fix. Review chips and "Write a review…" arrive as {instructions}.
+#
+# Images, in order: the drawing being judged, as drawn; Offcut's overlay on
+# it (numbered marks whose numbers are the measurement ids); the original
+# composition, for likeness; the user's references, if any.
+#
+# brief.txt is sent before this file, filled, by Offcut (not a placeholder).
+# Placeholders: {sheets} {frame} {min_width}
+# {plan} (the plan JSON the drawing was made from) {measurements} (JSON, of
+# this drawing) {findings} (the same in words) {style} {notes}
+# {instructions}. Any but {plan} may be empty; its line is then left out.
+Your task now: review a drawing made for this shadowbox, against the plan it was drawn from, and decide the cheapest way to make it right. You are the designer checking the illustrator's work. The finished object is {sheets} sheets of card at most, stacked in depth in a frame {frame} in outside size (the opening and border are as the brief above says), nothing thinner than {min_width}.
+
+What you are given:
+- The first image is the drawing, as the image model returned it.
+- The image with numbered marks is Offcut's overlay of the same drawing after snapping it to the plan's palette: each number is a measurement id below.
+- The other images are the user's original picture and references: the subject's likeness, nothing more.
+- Offcut's measurements and findings for this drawing. They are exact: trust them over your eye for anything small, thin or floating. Offcut, not you, decides whether errors remain.
+
+The plan: {plan}
+Offcut's findings: {findings}
+Measurements (JSON): {measurements}
+The user's review or instructions for this round: {instructions}
+About this subject: {notes}
+AI style for the whole project: {style}
+The user's review, when there is one, comes first: answer it, within the cutting limits.
+
+Check, in this order:
+1. Depth. Seen as stacked card, does the picture read correctly? Each feature on a plausible plane; nothing in front of what it rests on or behind what it rises out of; no near thing landing on a plane behind something it overlaps; neighbouring planes clearly different in both hue and lightness, so each reads as its own depth.
+2. Flat colour. Every region one flat colour. Outlines and contour lines are a defect, never a style: a dark rim round a shape, lines drawn inside it, line-art limbs. Gradients, shading and texture are defects too. Offcut dissolves strokes narrower than about three times {min_width} into the fills on either side, and refills regions flat; bold outlines, line-drawn parts and visible gradients still need redrawing.
+3. Palette. Each plane in the plan's colour, and no extra colours carrying shapes that matter.
+4. Support. Every piece held, by the border or ground, an overlap with its own sheet's card, card hidden behind a nearer plane, or scenery that reads as part of the picture. No thin bridges or struts, and supports that look added on count as a defect. Nothing floating in the sky.
+5. Likeness. The subject is recognisably the one in the original: silhouette, proportions, pose, facing and defining features. A feature the plan kept is still there.
+6. Detail. Nothing thinner than {min_width}: lines, gaps, contacts, small parts such as limbs, numerals, whiskers.
+
+Then choose one verdict:
+- "pass": the findings show no errors, the depth reads, likeness holds and the plan's colours are followed. Small imperfections that don't affect cutting or reading are fine.
+- "fix_local": everything left can be fixed by Offcut alone, with the local ops below. Prefer this whenever it suffices: it is free, instant and exact, while a redraw risks changing everything else.
+- "refine": something must be drawn again or moved: a bold outline, a line-drawn limb, a gradient, a feature on the wrong plane, a lost feature, a broken pose, a piece that only redrawing can hold. Include any local ops that also apply.
+- "replan": the plan itself is wrong, so redrawing from it will fail again: planes in an order that can't work, a feature given to a plane where it can't be held, a palette whose planes can't be told apart, too many or too few sheets.
+
+Local ops, each aimed at one measurement id ("target"):
+- "show_through": cut the piece out as a hole, so the deeper sheet named in "sheet" shows in its place. For small, enclosed, lighter features: a sun, an eye, a spot, a clock face.
+- "push_back": move the piece to a deeper sheet ("sheet", or null for the next sheet that can hold it), where it is joined to card or held behind a nearer plane.
+- "merge_colours": fold the piece's colour into the sheet named in "sheet", when it is only shading or a minor colour.
+- "map_colour": give the piece the card colour in "colour" ("#rrggbb"), when a plane came out in the wrong colour.
+- "remove": remove a speck or fragment too small to matter to the picture.
+- "thicken": widen a thin line or contact to "width_mm", at least {min_width}.
+Never remove something the plan kept, or that matters to likeness, to make a check pass: refine instead.
+
+A refine instruction goes to the image model with the drawing, so write it the way the plan's scene directions are written: concrete descriptions of what the picture looks like when it is right, naming the object, where it is, its colour and what changes, and ending with what to keep. The image model ignores abstract rules, so never write "no outlines" or "nothing thinner than…". Write instead, for example: "The red letter's edge meets the blue sky directly, with no black rim around it. The arms are thick red bands, as wide as an eye, ending in round cream hands. Keep everything else as it is." Refer to Offcut's marks by putting their ids in "marks"; don't put ids, millimetres, sheets or Offcut in the instruction. Use "mode": "edit" to change part of the drawing and keep the rest, or "redraw" when the composition itself is wrong.
+
+Return only the verdict, as one JSON object with no other text and no code fence. Every key shown is required; use null where a field doesn't apply:
+{
+  "verdict": "pass | fix_local | refine | replan",
+  "explain": "one plain sentence for the user saying what you found and what happens next, without ids",
+  "local_ops": [ { "op": "show_through", "target": "m7", "sheet": "s4", "colour": null, "count": null, "width_mm": null } ],
+  "refine": null or { "mode": "edit | redraw", "instruction": "concrete scene directions", "marks": ["m ids"] },
+  "plan_patch": [ { "op": "replace", "path": "/features/2/arrangement/kind", "value": "hole" } ]
+}
+Rules for the JSON: "local_ops" is empty for "pass" and may be filled for any other verdict; "refine" is always present: null for any verdict but "refine", and for "refine" an object with a non-empty instruction; "plan_patch" is empty unless the verdict is "replan", and then holds JSON Patch operations on the plan (paths like /sheets/1/card or /features/3/arrangement/sheet, values as strings); every id comes from the measurements or the plan.

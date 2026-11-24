@@ -1,0 +1,8 @@
+# Fix with AI, template route: from a fix list, when pieces float or
+# features are too thin. Placeholders: {issues} {done}
+Edit the first image, the flat front design of a layered paper shadowbox seen straight on, so that every piece is held. Keep its layers, composition and colours.
+Offcut found: {issues}
+Join each floating piece to the border, the ground or a shape of the same colour: extend it, move it, or add grass, a branch or a bank that suits the picture. Remove a floating detail only if nothing in the scene can hold it.
+Make lines that are too thin thicker, or remove them.
+The second image is the original picture: a subject reference only, not a style to copy.
+Already done in earlier rounds, keep it: {done}

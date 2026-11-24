@@ -1,5 +1,7 @@
 #include "app.h"
 #include <algorithm>
+#include "ai_client.h"
+#include "history.h"
 #include "window.h"
 namespace offcut
 {
@@ -27,6 +29,10 @@ application::application(rap::ui& toolkit)
 application::~application()
 {
     alive_.reset();
+    for (const auto& w : windows_)
+        w->cancel_work();
+    for (const auto& w : retired_)
+        w->cancel_work();
     worker_.request_stop();
     ready_.notify_all();
     worker_.join();
@@ -101,10 +107,18 @@ void application::changed()
     for (auto& w : windows_)
         w->refresh();
 }
-void application::task(std::shared_ptr<project> p, std::string activity, std::function<void(project&)> work)
+void application::task(std::shared_ptr<project> p, std::string activity, std::function<void(project&)> work, std::function<void(bool)> finished,
+                       std::string undo_label)
 {
     if (p->busy)
         return;
+    if (undo_label.empty())
+    {
+        undo_label = activity;
+        if (undo_label.ends_with("…"))
+            undo_label.resize(undo_label.size() - std::string_view("…").size());
+    }
+    p->cancel = std::make_shared<std::atomic_bool>(false);
     auto result = std::make_shared<project>(*p);
     p->busy = true;
     p->activity = std::move(activity);
@@ -113,19 +127,25 @@ void application::task(std::shared_ptr<project> p, std::string activity, std::fu
     {
         std::lock_guard lock(mutex_);
         queue_.push_back(
-            [this, weak, p, result, work = std::move(work)]
+            [this, weak, p, result, work = std::move(work), finished = std::move(finished), undo_label = std::move(undo_label)]
             {
                 std::string error;
+                bool cancelled = false;
                 try
                 {
                     work(*result);
+                }
+                catch (const ai_cancelled&)
+                {
+                    cancelled = true;
+                    error = "AI request cancelled.";
                 }
                 catch (const std::exception& e)
                 {
                     error = e.what();
                 }
                 ui.post(
-                    [this, weak, p, result, error]
+                    [this, weak, p, result, error, cancelled, finished, undo_label]
                     {
                         if (weak.expired())
                             return;
@@ -135,13 +155,28 @@ void application::task(std::shared_ptr<project> p, std::string activity, std::fu
                             result->pan_x = p->pan_x;
                             result->pan_y = p->pan_y;
                             *p = std::move(*result);
+                            if (!p->undo)
+                            {
+                                p->undo = std::make_shared<history>();
+                                p->undo->reset(*p);
+                            }
+                            else
+                            {
+                                p->undo->commit(*p, undo_label);
+                                p->undo->seal();
+                            }
+                            p->dirty = !p->undo->at_saved();
                         }
                         else
-                            p->activity = "Failed: " + error;
+                            p->activity = cancelled ? error : "Failed: " + error;
                         p->busy = false;
+                        p->ai_running = false;
+                        p->cancel.reset();
                         changed();
-                        if (!error.empty())
+                        if (!error.empty() && !cancelled)
                             ui.message(nullptr, {.icon = rap::message_spec::icon::error, .title = "Offcut", .text = error});
+                        if (finished)
+                            finished(error.empty());
                     });
             });
     }

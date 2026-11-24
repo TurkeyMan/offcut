@@ -1,0 +1,90 @@
+# The director's plan request (docs/ux-design.md section 8, "The loop" step 2
+# and "The plan"). Sent to the reasoning model ("Plans and reviews with")
+# with the images; it returns only the plan JSON, which Offcut validates and
+# compiles into the image prompt. Image models follow concrete directions
+# and ignore abstract rules, so this file's job is to make the director turn
+# the brief's rules into directions about this one picture.
+#
+# Images, in order: the composition as placed in the frame; the user's
+# references, if any; Offcut's overlay last, if measured (numbered marks
+# whose numbers are the measurement ids).
+#
+# brief.txt is sent before this file, filled, by Offcut (not a placeholder).
+# Placeholders: {sheets} {frame} {min_width} {measurements} (JSON) {findings} (the same in words)
+# {style} {notes} {instructions} (the user's three levels).
+# {style}, {notes}, {instructions}, {findings} and {measurements} may be
+# empty: each sits on its own line with a heading, so the line is left out.
+Your task now: plan this shadowbox before anything is drawn. You are the designer, not the illustrator. An image model will draw the flat front design from your plan, and Offcut will cut it into sheets, so think about the finished object: {sheets} sheets of card at most, stacked in depth inside a frame {frame} in outside size (the opening and border are as the brief above says), nothing thinner than {min_width}.
+
+What you are given:
+- The first image is the composition: the user's picture as placed in the frame. It is a subject reference for content, likeness, pose and placement. Its outlines, shading, gradients, textures and drawing style are not to be copied.
+- Any further images without numbered marks are the user's references, for likeness only.
+- The image with numbered marks, if there is one, is Offcut's overlay: each number is a measurement id below.
+- Offcut's measurements, when given: real counts and sizes from the source, which you can trust more than your own eye for anything thin, small or floating. Tie each decision to the ids that motivated it.
+
+Offcut's findings: {findings}
+Measurements (JSON): {measurements}
+
+The user's wishes, if any follow, are preferences within the cutting limits: fold them into your directions, keep the limits when they conflict, and say so in "risks". The instructions for this run come first, then the item's notes, then the project's style.
+Instructions for this run: {instructions}
+About this subject: {notes}
+AI style for the whole project: {style}
+
+Work through these steps in order, then write the plan.
+
+1. Subjects. Name what the picture is of and what makes it recognisable: silhouette, proportions, pose, facing, and the two or three defining features. Decide for each feature: keep, simplify (say to what, in large shapes), or drop. Drop or merge anything finer than {min_width}: text, numerals, whiskers, sparkles, thin stripes, single hairs, small specks. Outlines and contour lines in the source are always dropped: shapes meet edge to edge.
+
+2. Depth planes. Give every feature a plane, near to far, so the stack makes physical sense:
+- Front: the border, and the nearest foreground that frames the picture (grass, reeds, foliage, rocks, a branch reaching in from a side).
+- Middle: the subject, then whatever it stands on or in front of.
+- Far: distant scenery (hills, trees, a skyline).
+- Back: the backing, usually plain sky or background, one colour, nothing in it.
+A thing cannot be in front of what it rests on, or behind what it rises out of, and a near thing must not sit on a plane behind something it overlaps. Each sheet is a whole card that continues behind nearer planes: a hill runs on behind the subject. Record that in "extends_behind". You may use fewer than {sheets} sheets when the picture reads better; say why in "summary".
+
+3. Sheet, hole or merge, for each feature:
+- sheet: its own card, or part of a shared plane. For large features and anything that must read as nearer.
+- hole: no card; it is cut through the sheets in front so a deeper sheet or the backing shows through in that sheet's colour. Use it for small or enclosed features lighter than their surround: a sun or moon, eye whites and highlights, spots, windows, a clock face. A hole can't float and costs no sheet, but it takes the colour of the sheet it shows, so choose that sheet's colour to suit.
+- merge: it becomes part of a neighbour's shape and colour. For tonal variation, shading, and detail too small to cut.
+
+4. Support. Every piece of card must be held. In order of preference:
+- frame: it meets the border, or the ground: the subject stands on a bank that runs off both sides, an animal's back rises from the bottom edge;
+- overlap: it overlaps or touches card of its own sheet that is held;
+- hidden: it is held by card hidden behind a nearer plane. Offcut routes a strip at least {min_width} wide from the piece to the frame or its sheet's card, entirely behind nearer card, so nobody sees it. This works only where nearer card covers a path from the piece, for example a bird whose wing tucks behind a nearer tree that reaches the border. Set "hidden_support": true;
+- scenery: invented scenery or foreground that suits the picture and reads as part of it, not as a support: a grassy bank, reeds, a fence, a branch, a cloud meeting the top edge. Name it as a feature with "source": "invented";
+- recompose: move or resize the subject so it meets the border or the ground, if that keeps its intent.
+Never thin bridges, struts or ties. Nothing floats in the sky: no loose suns, stars, birds, sparkles or clouds unless they meet the border, are holes, or are held as above. Give an estimated "contact_mm" for each support.
+
+5. Palette. One card colour per sheet, front to back. Neighbouring planes must differ clearly in both hue and lightness, so each reads as its own depth and Offcut can separate them: never two greens a shade apart. The front sheet also carries the border, so it is usually the darkest or richest colour, and the back the palest, but the picture decides. Fit the subject's real colours where you can; where it has more colours than sheets, merge the minor ones and say which in "attention".
+
+6. Scene directions for the image model. This matters most. The image model draws well and follows concrete descriptions of the picture, but it ignores abstract rules: told "exactly 4 colours, no outlines, nothing floating", it drew nine colours, heavy black outlines, clock numerals and stars in the sky. So say what this picture looks like when it obeys, never the rule itself:
+- One plane per direction, near to far, naming its colour in words and what is on it: "Front layer, deep forest green: the border all round, and broad grass leaves rising from the bottom edge across the whole width."
+- Say where things touch: "The fox's paws stand on the bank; the bank runs off both sides of the picture."
+- Turn each rule into a fact about an object. Not "no outlines" but "The red letter's edge meets the blue sky directly; there is no dark rim around it." Not "nothing too thin" but "The arms are thick red bands, about as wide as an eye." Not "no floating objects" but "The sky is one plain pale blue, with nothing in it."
+- Give sizes relative to things in the picture or to the frame, not in millimetres or pixels.
+- Say how simplified features look: "The shell's pattern is six large cream spots."
+- Do not mention sheets, ids, Offcut, millimetres, JSON or cutting. Write 4 to 10 directions, each one or two short sentences.
+Then "avoid": short, concrete noun phrases for what this picture must not have, specific ones first ("black outline around the letter", "clock numerals", "arms drawn as thin lines"), then the general ones: outlines and contour lines, line art, gradients and shading, texture, text, stars or birds floating in the sky, anything thinner than a pencil.
+
+7. Route: "generate" (the usual: one new drawing); "edit" (the source is already flat, layered-looking art that needs only changes); "planes" (a hard scene whose planes keep fusing: each plane drawn on its own, back to front); "local" (flat art that only needs arranging: no drawing, Offcut applies "local" and "splits").
+
+Return only the plan, as one JSON object with no other text and no code fence. Every key shown is required; use null for "simplify_to", "merge_with" and "attention" where they don't apply, and for "arrangement" and "support" of a dropped feature:
+{
+  "plan_version": 1,
+  "route": "generate | planes | edit | local",
+  "summary": "one or two sentences: the picture, its planes, the main decisions",
+  "style": { "notes": "how shapes look, e.g. large flat shapes meeting edge to edge; fur as scalloped edges" },
+  "sheets": [ { "id": "s1", "depth": 1, "card": "#rrggbb", "role": "front | mid | backing", "holds": "what is on this plane, as a phrase the image model can draw" } ],
+  "features": [ {
+    "id": "short-id", "label": "what it is", "source": "reference | invented",
+    "keep": "keep | simplify | drop", "simplify_to": "what it becomes, if simplified",
+    "arrangement": { "kind": "sheet | hole | merge", "sheet": "the sheet id seen there", "through": ["ids of nearer sheets cut to show it"], "merge_with": "feature id, if merged" },
+    "support": { "by": "frame | ground | overlap | hidden | scenery | not_needed", "with": "the feature id or border edge that holds it", "contact_mm": 0 },
+    "extends_behind": ["ids of nearer features this continues under"], "hidden_support": false,
+    "evidence": ["measurement ids"], "attention": "what the drawing must get right here, if anything" } ],
+  "scene_directions": ["…"],
+  "avoid": ["…"],
+  "local": { "sheet_count": 4, "palette": [ { "colour": "#rrggbb", "sheet": "s1" } ], "ops": [] },
+  "splits": [],
+  "risks": ["what may still go wrong, for the review to check"]
+}
+Rules for the JSON: "ops" is usually empty; an op is written as in a review, e.g. { "op": "show_through", "target": "m3", "sheet": "s4", "colour": null, "count": null, "width_mm": null }; sheet ids run s1 (front, depth 1, carries the border) to the backing, which is last; "local.sheet_count" is the number of sheets; "local.palette" repeats each sheet's card colour, front to back; every feature has an arrangement unless dropped; a hole's "sheet" is the deeper sheet that shows and "through" lists every nearer sheet cut; "evidence" holds only ids from the measurements, or is empty; "splits" stays empty unless the route is "local".

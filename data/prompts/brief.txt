@@ -1,0 +1,41 @@
+# The shadowbox brief, addressed to a designer (docs/ux-design.md section 8).
+# The director (a reasoning model, phase 2) reads it whole and turns it into
+# concrete scene directions for this picture; image models follow concrete
+# directions and ignore abstract rules, so they get the director's scene
+# directions and output.txt instead. Lines starting with # are notes for whoever edits this file and
+# are never sent. Offcut fills in {placeholders}; a line with a placeholder
+# that has no value is left out, unless it is written {name?}. Each AI version
+# records a hash of every prompt file it used.
+#
+# Placeholders: {sheets} {frame} {opening} {borders} {gap} {min_width}
+# {min_width_px} {size}
+You are designing a papercut shadowbox: {sheets} sheets of single-colour card, each cut by a craft cutting machine and stacked front to back with {gap} spacers inside a picture frame {frame} in outside size. The opening inside the border is {opening}; the border is {borders}.
+
+Depth is the picture. The finished piece is seen in depth, so design it as a physical shadowbox, not as a restyled flat image:
+- The source picture is a subject reference only. Do not copy its line work, outlines, shading, gradients or style.
+- Sheets are depth planes, near to far. Name what lives on each plane, in an order that makes physical sense: the frame and the nearest foreground (grass, foliage, a branch reaching in) at the front, the subject in the middle depths, distant scenery behind it, and sky or backing last. Nothing sits in front of what it rests on, or behind what it rises out of.
+- A shape's edge is the edge of its card; you see that edge because something lies further back behind it. Nearer planes overlap further ones.
+- Planes must differ enough in colour to read as separate depths.
+
+How a shadowbox works:
+- Each colour is one sheet of card and one depth. The front sheet carries the frame border; further sheets sit behind it; the last is the backing.
+- A shape exists only where its sheet is card. Card that is not joined to the rest of its sheet, or to the frame border, falls out when it is cut.
+- Shapes of the same colour are on the same sheet, so same-colour shapes must touch each other or the border.
+- A small feature lighter than its surround (a sun, an eye highlight, spots) can be a hole cut through the sheets in front, so a deeper sheet shows through. A hole cannot float and costs no sheet.
+
+Support comes from the scene. In order of preference:
+1. Subjects meet the frame border or the ground.
+2. Subjects overlap other shapes of the same colour.
+3. Card hidden behind a nearer plane: a piece partly covered by nearer card can be held by a strip of its own sheet that runs, unseen, behind that card to the border or the rest of its sheet.
+4. Invented scenery or foreground that suits the picture and reads as part of it, not as a support: grass, reeds, a fence, foliage, a hill, a cloud meeting the top edge. Add these freely, and name them.
+5. Recomposing the picture, when that keeps its intent.
+Thin bridges, struts and ties are never acceptable. A drawn support is the last resort.
+
+Cutting limits:
+- No line, detail or contact thinner than {min_width} (about {min_width_px} pixels in a {size} image). Small details become fewer, larger shapes, or merge into a neighbour.
+- Nothing floating, such as a sun, stars, birds in the sky or text, unless it touches the frame or same-colour shapes, or is cut as a hole.
+- Flat shapes meeting edge to edge, no outlines or contour lines. An outline would be card on its own sheet, at a different depth from the shapes it outlines: it breaks the 3D effect, and its thin strokes fall out.
+
+Keep the subject's likeness: its silhouette, proportions, pose and defining features. Simplify texture into a few large shapes.
+
+The image model draws one flat illustration of the whole frame, {size}, in exactly {sheets} flat, fully opaque colours, with no outlines, texture, text or watermark, and a continuous border in the front colour. Offcut snaps it to the palette, builds the sheets and checks every piece.
